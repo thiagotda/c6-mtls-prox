@@ -157,7 +157,7 @@ const server = http.createServer(async (req, res) => {
 
       // ── Chamada autenticada Inter ──────────────────────────────────────────
       if (action === "inter_request") {
-        const extraHeaders: Record<string, string> = {};
+        const extraHeaders = {};
         if (conta) extraHeaders["x-conta-corrente"] = conta;
 
         const bodyStr = reqBody ? JSON.stringify(reqBody) : undefined;
