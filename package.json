@@ -2,7 +2,7 @@ json
 {
   "name": "c6-mtls-proxy",
   "version": "1.0.0",
-  "description": "Proxy mTLS C6 Bank - Finweb",
+  "description": "Proxy mTLS para C6 Bank API — Finweb",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
