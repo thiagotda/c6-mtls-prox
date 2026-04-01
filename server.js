@@ -61,3 +61,52 @@ const server = http.createServer(async (req, res) => {
 
   const { action, certPem, keyPem, clientId, clientSecret, sandbox, token, data: bodyData } = payload;
   const C6_HOST = sandbox ? "baas-api-sandbox.c6bank.info" : "baas-api.c6bank.info";
+  try {
+    if (action === "auth") {
+      const body = new URLSearchParams({ grant_type: "client_credentials", client_id: clientId, client_secret: clientSecret }).toString();
+      const r = await c6Request({ host: C6_HOST, path: "/v1/auth/", method: "POST", body, contentType: "application/x-www-form-urlencoded", certPem, keyPem });
+      res.writeHead(r.status, { "Content-Type": "application/json" });
+      res.end(r.body);
+      return;
+    }
+    if (action === "emitirBoleto") {
+      const body = JSON.stringify(bodyData);
+      const r = await c6Request({ host: C6_HOST, path: "/v1/bankslip/", method: "POST", body, token, certPem, keyPem });
+      res.writeHead(r.status, { "Content-Type": "application/json" });
+      res.end(r.body);
+      return;
+    }
+    if (action === "consultarBoleto") {
+      const r = await c6Request({ host: C6_HOST, path: /v1/bankslip/${bodyData.boletoId}, method: "GET", token, certPem, keyPem });
+      res.writeHead(r.status, { "Content-Type": "application/json" });
+      res.end(r.body);
+      return;
+    }
+    if (action === "cancelarBoleto") {
+      const r = await c6Request({ host: C6_HOST, path: /v1/bankslip/${bodyData.boletoId}/cancel, method: "POST", body: "{}", token, certPem, keyPem });
+      res.writeHead(r.status, { "Content-Type": "application/json" });
+      res.end(r.body);
+      return;
+    }
+    if (action === "enviarPix") {
+      const body = JSON.stringify(bodyData);
+      const r = await c6Request({ host: C6_HOST, path: "/v1/schedule-payments/pix", method: "POST", body, token, certPem, keyPem });
+      res.writeHead(r.status, { "Content-Type": "application/json" });
+      res.end(r.body);
+      return;
+    }
+    if (action === "health") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true, ts: new Date().toISOString() }));
+      return;
+    }
+    res.writeHead(400); res.end(JSON.stringify({ error: Ação desconhecida: ${action} }));
+  } catch (e) {
+    console.error("Erro proxy:", e.message);
+    res.writeHead(500, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: e.message }));
+  }
+});
+
+server.listen(PORT, () => console.log(C6 mTLS Proxy rodando na porta ${PORT}));
+```
