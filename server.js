@@ -128,7 +128,7 @@ const server = http.createServer(async (req, res) => {
   // ═══════════════════════════════════════════════════════════════════════════
   //  BANCO INTER
   // ═══════════════════════════════════════════════════════════════════════════
-  if (action === "inter_auth" || action === "inter_request") {
+  if (action === "inter_auth" || action === "inter_request" || action === "inter_request_pdf") {
     const { certPem, keyPem, clientId, clientSecret, scope, sandbox, token, method, path, body: reqBody, conta } = payload;
     const INTER_HOST = sandbox
       ? "cdpj-sandbox.partners.uatinter.co"
