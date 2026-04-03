@@ -175,10 +175,19 @@ const server = http.createServer(async (req, res) => {
           binary: true,  // sinalizar que a resposta é binária
         });
 
-        // Converter buffer para base64
-        const pdfBase64 = Buffer.from(r.rawBody).toString("base64");
+        // Se não for 200, retornar erro com body legível
+        if (r.status !== 200) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Inter PDF status " + r.status + ": " + r.body.slice(0,300), status: r.status }));
+          return;
+        }
+        // Log para debug
+        const pdfContentType = r.headers["content-type"] || "";
+        console.log("[inter_request_pdf] status:", r.status, "content-type:", pdfContentType, "bytes:", r.rawBody.length);
+        // Converter rawBody (Buffer binário) para base64
+        const pdfBase64 = r.rawBody.toString("base64");
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ pdf_base64: pdfBase64, status: r.status }));
+        res.end(JSON.stringify({ pdf_base64: pdfBase64, status: r.status, content_type: pdfContentType, size: r.rawBody.length }));
         return;
       }
 
