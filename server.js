@@ -17,7 +17,7 @@ function mtlsRequest({ host, path, method, body, contentType, token, certPem, ke
       key:  keyPem,
       rejectUnauthorized: true,
       headers: {
-        "Accept":       binary ? "application/pdf" : "application/json",
+        "Accept":       binary ? "*/*" : "application/json",
         "Content-Type": contentType || "application/json",
         ...(token ? { "Authorization": `Bearer ${token}` } : {}),
         ...(body  ? { "Content-Length": Buffer.byteLength(body) } : {}),
