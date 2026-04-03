@@ -6,7 +6,7 @@ const PORT   = process.env.PORT   || 3000;
 const SECRET = process.env.PROXY_SECRET || "";
 
 // ─── Helper: faz request mTLS genérico ───────────────────────────────────────
-function mtlsRequest({ host, path, method, body, contentType, token, certPem, keyPem, extraHeaders = {} }) {
+function mtlsRequest({ host, path, method, body, contentType, token, certPem, keyPem, extraHeaders = {}, binary = false }) {
   return new Promise((resolve, reject) => {
     const opts = {
       hostname: host,
@@ -17,7 +17,7 @@ function mtlsRequest({ host, path, method, body, contentType, token, certPem, ke
       key:  keyPem,
       rejectUnauthorized: true,
       headers: {
-        "Accept":       "application/json",
+        "Accept":       binary ? "application/pdf" : "application/json",
         "Content-Type": contentType || "application/json",
         ...(token ? { "Authorization": `Bearer ${token}` } : {}),
         ...(body  ? { "Content-Length": Buffer.byteLength(body) } : {}),
@@ -26,9 +26,12 @@ function mtlsRequest({ host, path, method, body, contentType, token, certPem, ke
     };
 
     const req = https.request(opts, (res) => {
-      let data = "";
-      res.on("data",  chunk => data += chunk);
-      res.on("end",   ()    => resolve({ status: res.statusCode, body: data, headers: res.headers }));
+      const chunks = [];
+      res.on("data",  chunk => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+      res.on("end",   () => {
+        const rawBody = Buffer.concat(chunks);
+        resolve({ status: res.statusCode, body: rawBody.toString(), rawBody, headers: res.headers });
+      });
     });
     req.on("error", reject);
     if (body) req.write(body);
@@ -153,6 +156,30 @@ const server = http.createServer(async (req, res) => {
 
         res.writeHead(r.status, { "Content-Type": "application/json" });
         res.end(r.body); return;
+      }
+
+
+      // ── Download PDF boleto Inter ──────────────────────────────────────────
+      if (action === "inter_request_pdf") {
+        const extraHeaders = {};
+        if (conta) extraHeaders["x-conta-corrente"] = conta;
+
+        const r = await mtlsRequest({
+          host:   INTER_HOST,
+          path,
+          method: "GET",
+          token,
+          certPem,
+          keyPem,
+          extraHeaders,
+          binary: true,  // sinalizar que a resposta é binária
+        });
+
+        // Converter buffer para base64
+        const pdfBase64 = Buffer.from(r.rawBody).toString("base64");
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ pdf_base64: pdfBase64, status: r.status }));
+        return;
       }
 
       // ── Chamada autenticada Inter ──────────────────────────────────────────
