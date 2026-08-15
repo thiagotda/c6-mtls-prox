@@ -1,12 +1,10 @@
 {
-  "name": "c6-mtls-proxy",
-  "version": "1.0.0",
-  "description": "Proxy mTLS para C6 Bank API — Finweb",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
-  "engines": {
-    "node": ">=18.0.0"
+  "name": "finflow-mtls-proxy",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": { "start": "node server.js" },
+  "dependencies": {
+    "express": "^4.19.2",
+    "node-fetch": "^2.7.0"
   }
 }
